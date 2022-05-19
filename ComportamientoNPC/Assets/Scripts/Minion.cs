@@ -9,6 +9,7 @@ public class Minion : MonoBehaviour
     public Transform Casa;
     public LayerMask mascaraJugador;
     public float RadioVision = 15;
+    public float anguloLimite = 30;
     NavMeshAgent agenteNavegacion;
 
     Collider colisionador;
@@ -66,8 +67,15 @@ public class Minion : MonoBehaviour
         {
             if (golpe.transform.gameObject.tag == "Player")
             {
-
-                return true;
+                //Comprobamos el angulo
+                if (ComprobarAngulo(direccion))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
@@ -75,5 +83,18 @@ public class Minion : MonoBehaviour
             }
         }
         return false;
+    }
+
+    private bool ComprobarAngulo(Vector3 direccion)
+    {
+        float angulo = Vector3.Angle(this.transform.forward, direccion);
+        if (angulo <= anguloLimite)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
