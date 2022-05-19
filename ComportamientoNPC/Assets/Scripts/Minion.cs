@@ -90,7 +90,7 @@ public class Minion : MonoBehaviour
         direccion = direccion.normalized;
         direccion = -direccion;
         //Subimos la posicion del raycast
-        RaycastHit[] objetivos = Physics.RaycastAll(this.transform.position + Vector3.up, direccion, 10, -1);
+        RaycastHit[] objetivos = Physics.RaycastAll(this.transform.position + Vector3.up, direccion, RadioVision, -1);
         //En el caso de que el primer objeto que vea el raycast del minion sea el jugador
         foreach (RaycastHit golpe in objetivos)
         {
@@ -108,7 +108,7 @@ public class Minion : MonoBehaviour
         direccion = -direccion;
         //Cogemos el angulo entre el vector frente del jugador y el objetivo
         float angulo = Vector3.Angle(this.transform.forward, direccion);
-        if (angulo <= AngulosVision)
+        if (angulo <= AngulosVision/2)
         {
             return true;
         }
