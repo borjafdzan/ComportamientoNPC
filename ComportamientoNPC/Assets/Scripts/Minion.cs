@@ -23,7 +23,6 @@ public class Minion : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(ComprobarRadio());
         if (ComprobarRadio())
         {
             this.agenteNavegacion.destination = Jugador.transform.position;
@@ -39,13 +38,42 @@ public class Minion : MonoBehaviour
         RaycastHit[] JugadoresEnObjetivo = Physics.SphereCastAll(this.transform.position, RadioVision, this.transform.forward, RadioVision, mascaraJugador);
         if (JugadoresEnObjetivo.Length > 0)
         {
-
-            return true;
+            if (ComprobarSiNoHayObstaculos(JugadoresEnObjetivo[0].transform.gameObject))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
         else
         {
 
             return false;
         }
+    }
+
+    private bool ComprobarSiNoHayObstaculos(GameObject objetivoDetectado)
+    {
+        Vector3 direccion = this.transform.position - objetivoDetectado.transform.position;
+        direccion = direccion.normalized;
+        direccion = -direccion;
+        //Subimos la posicion del raycast
+        RaycastHit[] objetivos = Physics.RaycastAll(this.transform.position + Vector3.up, direccion, 10, -1);
+        //En el caso de que el primer objeto que vea el raycast del minion sea el jugador
+        foreach (RaycastHit golpe in objetivos)
+        {
+            if (golpe.transform.gameObject.tag == "Player")
+            {
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return false;
     }
 }
