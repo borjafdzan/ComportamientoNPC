@@ -3,14 +3,22 @@ using System.Collections.Generic;
 using UnityEngine.AI;
 using UnityEngine;
 
+public enum TipoVision
+{
+    Circular,
+    CircularConObstaculos,
+    CircularConObstaculosYAngulos
+}
 public class Minion : MonoBehaviour
 {
     public GameObject Jugador;
     public Transform Casa;
     public LayerMask mascaraJugador;
     public float RadioVision = 15;
-    public float anguloLimite = 30;
+    public float AngulosVision = 40;
     NavMeshAgent agenteNavegacion;
+    public TipoVision tipoVision;
+    GameObject targetObjetivo;
 
     Collider colisionador;
     // Start is called before the first frame update
@@ -24,7 +32,7 @@ public class Minion : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (ComprobarRadio())
+        if (ComprobarVision())
         {
             this.agenteNavegacion.destination = Jugador.transform.position;
         }
@@ -34,25 +42,46 @@ public class Minion : MonoBehaviour
         }
     }
 
+    private bool ComprobarVision()
+    {
+        switch (tipoVision)
+        {
+            case TipoVision.Circular:
+                return ComprobarRadio();
+            case TipoVision.CircularConObstaculos:
+                return ComprobarCircularConObstaculos();
+            case TipoVision.CircularConObstaculosYAngulos:
+                return ComprobarConAngulo();
+        }
+        return false;
+    }
+
     private bool ComprobarRadio()
     {
         RaycastHit[] JugadoresEnObjetivo = Physics.SphereCastAll(this.transform.position, RadioVision, this.transform.forward, RadioVision, mascaraJugador);
         if (JugadoresEnObjetivo.Length > 0)
         {
-            if (ComprobarSiNoHayObstaculos(JugadoresEnObjetivo[0].transform.gameObject))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            targetObjetivo = JugadoresEnObjetivo[0].transform.gameObject;
+            return true;
         }
-        else
-        {
+        return false;
+    }
 
-            return false;
-        }
+    private bool ComprobarCircularConObstaculos()
+    {
+        if (ComprobarRadio())
+            if (ComprobarSiNoHayObstaculos(Jugador))
+                return true;
+        return false;
+    }
+
+    private bool ComprobarConAngulo()
+    {
+        if (ComprobarRadio())
+            if (ComprobarSiNoHayObstaculos(Jugador))
+                if (ComprobarRango())
+                    return true;
+        return false;
     }
 
     private bool ComprobarSiNoHayObstaculos(GameObject objetivoDetectado)
@@ -66,29 +95,20 @@ public class Minion : MonoBehaviour
         foreach (RaycastHit golpe in objetivos)
         {
             if (golpe.transform.gameObject.tag == "Player")
-            {
-                //Comprobamos el angulo
-                if (ComprobarAngulo(direccion))
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
+                return true;
+            return false;
         }
         return false;
     }
 
-    private bool ComprobarAngulo(Vector3 direccion)
+    private bool ComprobarRango()
     {
+        Vector3 direccion = this.transform.position - Jugador.transform.position;
+        direccion = direccion.normalized;
+        direccion = -direccion;
+        //Cogemos el angulo entre el vector frente del jugador y el objetivo
         float angulo = Vector3.Angle(this.transform.forward, direccion);
-        if (angulo <= anguloLimite)
+        if (angulo <= AngulosVision)
         {
             return true;
         }
