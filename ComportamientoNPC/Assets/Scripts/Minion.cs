@@ -107,7 +107,9 @@ public class Minion : MonoBehaviour
         direccion = direccion.normalized;
         direccion = -direccion;
         //Cogemos el angulo entre el vector frente del jugador y el objetivo
-        float angulo = Vector3.Angle(this.transform.forward, direccion);
+        float angulo = Vector3.SignedAngle(this.transform.forward, direccion, this.transform.up);
+        //Vector3 productoCruzado = Vector3.Cross(this.transform.forward, direccion);
+        Debug.Log(angulo);
         if (angulo <= AngulosVision/2 && angulo >= -AngulosVision/2)
         {
             return true;
