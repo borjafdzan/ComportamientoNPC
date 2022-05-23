@@ -9,6 +9,13 @@ public enum TipoVision
     CircularConObstaculos,
     CircularConObstaculosYAngulos
 }
+
+public enum EstadosJugador
+{
+    Esperar,
+    Perseguir,
+    Volver
+}
 public class Minion : MonoBehaviour
 {
     public GameObject Jugador;
@@ -19,6 +26,7 @@ public class Minion : MonoBehaviour
     NavMeshAgent agenteNavegacion;
     public TipoVision tipoVision;
     GameObject targetObjetivo;
+    public EstadosJugador estado;
 
     Collider colisionador;
     // Start is called before the first frame update
@@ -27,18 +35,53 @@ public class Minion : MonoBehaviour
         this.agenteNavegacion = GetComponent<NavMeshAgent>();
 
         agenteNavegacion.destination = Jugador.transform.position;
+        estado = EstadosJugador.Esperar;
     }
 
+    private void ConfigurarEstado(EstadosJugador nuevoEstado)
+    {
+        if (nuevoEstado != estado)
+        {
+            estado = nuevoEstado;
+            InterfazUsuario.instancia.ConfigurarEtiqueta(estado.ToString());
+            switch (estado)
+            {
+                case EstadosJugador.Esperar:
+                    agenteNavegacion.destination = Casa.position;
+                    break;
+                case EstadosJugador.Perseguir:
+                    agenteNavegacion.destination = Jugador.transform.position;
+                    Debug.Log("Se cambia el estado a perseguir");
+                    break;
+                case EstadosJugador.Volver:
+                    agenteNavegacion.destination = Casa.position;
+                    break;
+            }
+        }
+    }
     // Update is called once per frame
     void Update()
     {
-        if (ComprobarVision())
+        bool estaEnVision = ComprobarVision();
+        Debug.Log(estaEnVision);
+        switch (estado)
         {
-            this.agenteNavegacion.destination = Jugador.transform.position;
-        }
-        else
-        {
-            this.agenteNavegacion.destination = Casa.position;
+            case EstadosJugador.Esperar:
+                if (estaEnVision)
+                    ConfigurarEstado(EstadosJugador.Perseguir);
+                break;
+            case EstadosJugador.Volver:
+                if (estaEnVision)
+                    ConfigurarEstado(EstadosJugador.Perseguir);
+                else if (agenteNavegacion.remainingDistance <= agenteNavegacion.stoppingDistance)
+                    ConfigurarEstado(EstadosJugador.Esperar);
+                break;
+            case EstadosJugador.Perseguir:
+                if (!estaEnVision)
+                    ConfigurarEstado(EstadosJugador.Volver);
+                else 
+                    agenteNavegacion.destination = Jugador.transform.position;
+                break;
         }
     }
 
@@ -110,7 +153,7 @@ public class Minion : MonoBehaviour
         float angulo = Vector3.SignedAngle(this.transform.forward, direccion, this.transform.up);
         //Vector3 productoCruzado = Vector3.Cross(this.transform.forward, direccion);
         Debug.Log(angulo);
-        if (angulo <= AngulosVision/2 && angulo >= -AngulosVision/2)
+        if (angulo <= AngulosVision / 2 && angulo >= -AngulosVision / 2)
         {
             return true;
         }
