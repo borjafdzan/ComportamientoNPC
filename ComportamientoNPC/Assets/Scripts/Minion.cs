@@ -80,10 +80,10 @@ public class Minion : MonoBehaviour
             case EstadosJugador.Esperar:
                 if (estaEnVision)
                     ConfigurarEstado(EstadosJugador.Perseguir);
-                    /*
-                else
-                    EjecutarEsperar();
-                    */
+                /*
+            else
+                EjecutarEsperar();
+                */
                 break;
             case EstadosJugador.Patrullar:
                 if (estaEnVision)
@@ -186,15 +186,21 @@ public class Minion : MonoBehaviour
         }
     }
 
-    private void DepurarAngulo(){
+    private void DepurarAngulo()
+    {
         Debug.Log("Esta funcionando");
-        Vector3 direccionIzquierda =  Quaternion.AngleAxis(-AngulosVision/2, Vector3.up) * this.transform.forward;
-        Vector3 direccionDerecha = Quaternion.AngleAxis(AngulosVision, Vector3.up) * this.transform.forward;
-        Debug.DrawRay(this.transform.position + Vector3.up, direccionDerecha + Vector3.up * RadioVision, Color.cyan);
-        Debug.DrawRay(this.transform.position + Vector3.up, direccionIzquierda + Vector3.up * RadioVision, Color.cyan);
+        Quaternion giroDerecha = Quaternion.Euler(this.transform.rotation.x, this.transform.rotation.y + 30, this.transform.rotation.z);
+        Quaternion giroIzquierda = Quaternion.Euler(this.transform.rotation.x, this.transform.rotation.y - 30, this.transform.rotation.z);
+        Vector3 direccionIzquierda = Quaternion.Euler(0, -AngulosVision/2, 0) * transform.forward;
+        Vector3 direccionDerecha = Quaternion.Euler(0, AngulosVision/2, 0) * transform.forward;
+        //Vector3 direccionIzquierda =  Quaternion.AngleAxis(-AngulosVision/2, Vector3.up) * this.transform.forward;
+        //Vector3 direccionDerecha = Quaternion.AngleAxis(AngulosVision, Vector3.up) * this.transform.forward;
+        Debug.DrawRay(this.transform.position + Vector3.up, direccionDerecha   * RadioVision, Color.cyan);
+        Debug.DrawRay(this.transform.position + Vector3.up, direccionIzquierda  * RadioVision, Color.cyan);
     }
 
-    private void EjecutarEsperar(){
+    private void EjecutarEsperar()
+    {
         float valorRotacion = Mathf.PingPong(Time.time * 4, 60);
         Debug.Log(valorRotacion);
         valorRotacion -= 30;
