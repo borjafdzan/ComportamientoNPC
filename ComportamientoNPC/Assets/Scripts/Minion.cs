@@ -13,11 +13,16 @@ public enum TipoVision
 public enum EstadosJugador
 {
     Esperar,
+    Patrullar,
     Perseguir,
     Volver
 }
 public class Minion : MonoBehaviour
 {
+    //Campos relacionados con la patrulla
+    public Transform[] posicionesMoverse;
+    private int indicePatrulla;
+    private bool isInDestino = false;
     public GameObject Jugador;
     public Transform Casa;
     public LayerMask mascaraJugador;
@@ -27,6 +32,7 @@ public class Minion : MonoBehaviour
     public TipoVision tipoVision;
     GameObject targetObjetivo;
     public EstadosJugador estado;
+    Transform rotacionSegEsperar;
 
     Collider colisionador;
     // Start is called before the first frame update
@@ -47,11 +53,17 @@ public class Minion : MonoBehaviour
             switch (estado)
             {
                 case EstadosJugador.Esperar:
-                    agenteNavegacion.destination = Casa.position;
+                    //agenteNavegacion.destination = Casa.position;
+                    agenteNavegacion.destination = transform.position;
+                    rotacionSegEsperar = this.transform;
+                    break;
+
+                case EstadosJugador.Patrullar:
+                    agenteNavegacion.destination = posicionesMoverse[indicePatrulla].position;
                     break;
                 case EstadosJugador.Perseguir:
                     agenteNavegacion.destination = Jugador.transform.position;
-                    Debug.Log("Se cambia el estado a perseguir");
+                    //Debug.Log("Se cambia el estado a perseguir");
                     break;
                 case EstadosJugador.Volver:
                     agenteNavegacion.destination = Casa.position;
@@ -63,23 +75,33 @@ public class Minion : MonoBehaviour
     void Update()
     {
         bool estaEnVision = ComprobarVision();
-        Debug.Log(estaEnVision);
         switch (estado)
         {
             case EstadosJugador.Esperar:
                 if (estaEnVision)
                     ConfigurarEstado(EstadosJugador.Perseguir);
+                    /*
+                else
+                    EjecutarEsperar();
+                    */
+                break;
+            case EstadosJugador.Patrullar:
+                if (estaEnVision)
+                    ConfigurarEstado(EstadosJugador.Perseguir);
+                else
+                    Patrullar();
                 break;
             case EstadosJugador.Volver:
                 if (estaEnVision)
                     ConfigurarEstado(EstadosJugador.Perseguir);
                 else if (agenteNavegacion.remainingDistance <= agenteNavegacion.stoppingDistance)
-                    ConfigurarEstado(EstadosJugador.Esperar);
+                    //ConfigurarEstado(EstadosJugador.Esperar);
+                    ConfigurarEstado(EstadosJugador.Patrullar);
                 break;
             case EstadosJugador.Perseguir:
                 if (!estaEnVision)
                     ConfigurarEstado(EstadosJugador.Volver);
-                else 
+                else
                     agenteNavegacion.destination = Jugador.transform.position;
                 break;
         }
@@ -120,6 +142,7 @@ public class Minion : MonoBehaviour
 
     private bool ComprobarConAngulo()
     {
+        DepurarAngulo();
         if (ComprobarRadio())
             if (ComprobarSiNoHayObstaculos(Jugador))
                 if (ComprobarRango())
@@ -152,7 +175,7 @@ public class Minion : MonoBehaviour
         //Cogemos el angulo entre el vector frente del jugador y el objetivo
         float angulo = Vector3.SignedAngle(this.transform.forward, direccion, this.transform.up);
         //Vector3 productoCruzado = Vector3.Cross(this.transform.forward, direccion);
-        Debug.Log(angulo);
+        //Debug.Log(angulo);
         if (angulo <= AngulosVision / 2 && angulo >= -AngulosVision / 2)
         {
             return true;
@@ -161,5 +184,57 @@ public class Minion : MonoBehaviour
         {
             return false;
         }
+    }
+
+    private void DepurarAngulo(){
+        Debug.Log("Esta funcionando");
+        Vector3 direccionIzquierda =  Quaternion.AngleAxis(-AngulosVision/2, Vector3.up) * this.transform.forward;
+        Vector3 direccionDerecha = Quaternion.AngleAxis(AngulosVision, Vector3.up) * this.transform.forward;
+        Debug.DrawRay(this.transform.position + Vector3.up, direccionDerecha + Vector3.up * RadioVision, Color.cyan);
+        Debug.DrawRay(this.transform.position + Vector3.up, direccionIzquierda + Vector3.up * RadioVision, Color.cyan);
+    }
+
+    private void EjecutarEsperar(){
+        float valorRotacion = Mathf.PingPong(Time.time * 4, 60);
+        Debug.Log(valorRotacion);
+        valorRotacion -= 30;
+        transform.rotation = Quaternion.Euler(0, this.rotacionSegEsperar.rotation.y + valorRotacion, 0);
+    }
+
+    //Funcionalidad Patrullar
+    private void Patrullar()
+    {
+        if (AlcanzoDestino())
+        {
+            SiguientePosicion();
+        }
+    }
+    private bool AlcanzoDestino()
+    {
+        if (Vector3.Distance(this.transform.position, posicionesMoverse[indicePatrulla].position) < 0.5f)
+        {
+            return true;
+        }
+        return false;
+    }
+    private void SiguientePosicion()
+    {
+        this.indicePatrulla++;
+        if (indicePatrulla >= this.posicionesMoverse.Length)
+        {
+            this.indicePatrulla = 0;
+        }
+
+        ConfigurarEstado(EstadosJugador.Esperar);
+        Invoke("AcabarEspera", 5);
+
+    }
+
+
+    private void AcabarEspera()
+    {
+        ConfigurarEstado(EstadosJugador.Patrullar);
+        this.agenteNavegacion.destination = posicionesMoverse[indicePatrulla].position;
+        //Debug.Log("La siguiente posicion es " + this.indicePatrulla);
     }
 }

@@ -38,7 +38,6 @@ public class MoverAgente : MonoBehaviour
     {
         if (Vector3.Distance(this.transform.position, posicionesMoverse[indicePatrulla].position) < 0.2f)
         {
-            Debug.Log("Llego al destino");
             return true;
         }
         return false;
