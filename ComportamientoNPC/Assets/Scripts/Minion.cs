@@ -43,7 +43,10 @@ public class Minion : MonoBehaviour
         agenteNavegacion.destination = Jugador.transform.position;
         estado = EstadosJugador.Esperar;
     }
-
+    //Estado Esperar: pone el destino al mismo transform en el que esta el agente
+    //Estado Patrullar: pone el destino en la posicion del array de posiciones a patrullar con el indice actual
+    //Estado perseguir: opne el destino al transform del jugador
+    //Estado volver: pone el destino a la casa inicial del jugador
     private void ConfigurarEstado(EstadosJugador nuevoEstado)
     {
         if (nuevoEstado != estado)
@@ -63,7 +66,6 @@ public class Minion : MonoBehaviour
                     break;
                 case EstadosJugador.Perseguir:
                     agenteNavegacion.destination = Jugador.transform.position;
-                    //Debug.Log("Se cambia el estado a perseguir");
                     break;
                 case EstadosJugador.Volver:
                     agenteNavegacion.destination = Casa.position;
@@ -120,7 +122,8 @@ public class Minion : MonoBehaviour
         }
         return false;
     }
-
+    //Hace un sphere cast con la mascara del jugador en caso de que detecte algun objeto devuelve
+    //true si no l hace devuelve false
     private bool ComprobarRadio()
     {
         RaycastHit[] JugadoresEnObjetivo = Physics.SphereCastAll(this.transform.position, RadioVision, this.transform.forward, RadioVision, mascaraJugador);
@@ -150,6 +153,9 @@ public class Minion : MonoBehaviour
         return false;
     }
 
+    //Emite un raycast en caso de que el primer objeto impactado no sea el jugador
+    //significa que hay un objeto en el medio y por lo tanto devuelve false si es
+    //el player devuelve true
     private bool ComprobarSiNoHayObstaculos(GameObject objetivoDetectado)
     {
         Vector3 direccion = this.transform.position - objetivoDetectado.transform.position;
@@ -167,6 +173,8 @@ public class Minion : MonoBehaviour
         return false;
     }
 
+    //Este metodo comprueba que el objetivo esta en el angulo determinado
+    //se utiliza el metodo SignedAngle porque da tambien angulos negativos
     private bool ComprobarRango()
     {
         Vector3 direccion = this.transform.position - Jugador.transform.position;
@@ -185,16 +193,12 @@ public class Minion : MonoBehaviour
             return false;
         }
     }
-
+    //Este metodo gira el transform.forward el jugador los grados necesarios y dispara 2 rayos 
+    //de color azul
     private void DepurarAngulo()
     {
-        Debug.Log("Esta funcionando");
-        Quaternion giroDerecha = Quaternion.Euler(this.transform.rotation.x, this.transform.rotation.y + 30, this.transform.rotation.z);
-        Quaternion giroIzquierda = Quaternion.Euler(this.transform.rotation.x, this.transform.rotation.y - 30, this.transform.rotation.z);
         Vector3 direccionIzquierda = Quaternion.Euler(0, -AngulosVision/2, 0) * transform.forward;
         Vector3 direccionDerecha = Quaternion.Euler(0, AngulosVision/2, 0) * transform.forward;
-        //Vector3 direccionIzquierda =  Quaternion.AngleAxis(-AngulosVision/2, Vector3.up) * this.transform.forward;
-        //Vector3 direccionDerecha = Quaternion.AngleAxis(AngulosVision, Vector3.up) * this.transform.forward;
         Debug.DrawRay(this.transform.position + Vector3.up, direccionDerecha   * RadioVision, Color.cyan);
         Debug.DrawRay(this.transform.position + Vector3.up, direccionIzquierda  * RadioVision, Color.cyan);
     }
@@ -215,6 +219,8 @@ public class Minion : MonoBehaviour
             SiguientePosicion();
         }
     }
+    //Se comprueba que la distancia entre la posicion del agente y la posicio al que se debe mover es menor a 
+    //0.5 si es asi se llama al metodo Siguiente posicion
     private bool AlcanzoDestino()
     {
         if (Vector3.Distance(this.transform.position, posicionesMoverse[indicePatrulla].position) < 0.5f)
@@ -223,6 +229,8 @@ public class Minion : MonoBehaviour
         }
         return false;
     }
+    //Incrementa el indice de la patrulla y cambia el estado a esperar despues de 5 segundos
+    //cambia al estado Patrullar.
     private void SiguientePosicion()
     {
         this.indicePatrulla++;
@@ -240,7 +248,5 @@ public class Minion : MonoBehaviour
     private void AcabarEspera()
     {
         ConfigurarEstado(EstadosJugador.Patrullar);
-        this.agenteNavegacion.destination = posicionesMoverse[indicePatrulla].position;
-        //Debug.Log("La siguiente posicion es " + this.indicePatrulla);
     }
 }
